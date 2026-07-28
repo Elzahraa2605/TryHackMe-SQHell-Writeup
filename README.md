@@ -15,7 +15,7 @@
 
 # Lab Overview
 
-الماشين دي مش عن Root Access زي الماشينز التقليدية، دي عبارة عن (CTF-style Web Application) اسمها SQHell ومبنية بالكامل عشان تعلّمنا أنواع الـ SQL Injection المختلفة. فيه 5 Flags متوزعة على أماكن مختلفة في التطبيق، وكل Flag بتمثل نوع مختلف من الـ Injection، يعني إحنا مش بنستغل ثغرة واحدة وخلاص، إحنا بنمر على رحلة كاملة من الـ Authentication Bypass البسيط لحد الـ Blind SQL Injection عن طريق الـ HTTP Headers، وصولاً للـ UNION-based SQL Injection اليدوي.
+المشين دي مش عن Root Access زي الماشينز التقليدية، دي عبارة عن (CTF-style Web Application) اسمها SQHell ومبنية بالكامل عشان تعلّمنا أنواع الـ SQL Injection المختلفة. فيه 5 Flags متوزعة على أماكن مختلفة في التطبيق، وكل Flag بتمثل نوع مختلف من الـ Injection، يعني إحنا مش بنستغل ثغرة واحدة وخلاص، إحنا بنمر على رحلة كاملة من الـ Authentication Bypass البسيط لحد الـ Blind SQL Injection عن طريق الـ HTTP Headers، وصولاً للـ UNION-based SQL Injection اليدوي.
 
 ---
 
@@ -35,7 +35,9 @@ nmap -p- --min-rate 5000 10.129.160.119 -oN open_ports.txt
 
 ## Technical Analysis
 
-## Technical Analysis * **Findings**: فيه بورتين مفتوحين بس، `22/tcp` شغال عليه `ssh`، و `80/tcp` شغال عليه `http`. * **Impact**: مفيش أي خدمات تانية غريبة أو مثيرة للاهتمام، يبقى الهجوم هيكون بالكامل عن طريق الـ Web Application اللي شغالة على بورت 80. * **Assessment & Conclusions**: بما إن الـ SSH مش معاه أي Credentials معروفة دلوقتي، يبقى نقطة الدخول الوحيدة المتاحة هي الموقع نفسه.
+* **Findings**: فيه بورتين مفتوحين بس، `22/tcp` شغال عليه `ssh`، و `80/tcp` شغال عليه `http`.
+* **Impact**: مفيش أي خدمات تانية غريبة أو مثيرة للاهتمام، يبقى الهجوم هيكون بالكامل عن طريق الـ Web Application اللي شغالة على بورت 80.
+* **Assessment & Conclusions**: بما إن الـ SSH مش معاه أي Credentials معروفة دلوقتي، يبقى نقطة الدخول الوحيدة المتاحة هي الموقع نفسه.
 
 ## Next Logical Step
 
