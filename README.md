@@ -26,7 +26,7 @@ nmap -sV -Pn 10.129.160.119
 <div dir="rtl" align="right">
 
 <p align="center">
-  <img src="SQHell-screens/step1.jpg" width="600">
+  <img src="SQHell-screens/step1.png" width="600">
 </p>
 
 
