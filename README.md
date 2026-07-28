@@ -1,9 +1,5 @@
-
-```markdown
-<div dir="rtl" align="right">
-
 <p align="center">
-  <img src="SQHell-screens/photo3.jpg" width="600">
+  <img src="SQHell-screens/photo0.jpg" width="600">
 </p>
 
 # Machine Information
@@ -11,303 +7,372 @@
 - **Machine Name**: SQHell
 - **Platform**: TryHackMe
 - **Difficulty**: Medium
-- **Topics Covered**: Web Enumeration, SQL Injection (Union-Based, Time-Based Blind, Error-Based, Nested/Secondary Injection, Header-Based Injection), Automated Exploitation via `sqlmap`, Burp Suite Request Interception.
+- **Topics Covered**: Web Enumeration, SQL Injection (Authentication Bypass, Blind/Time-based SQLi, UNION-based SQLi), Manual & Automated Exploitation with sqlmap.
 
 ---
 
 # Lab Overview
 
-المشين دي عبارة عن بيئة اختبار اختراق متخصصة في ثغرات حقن الاستعلامات (SQL Injection) بمختلف أنواعها وأشكالها على تطبيقات الويب. الهدف الرئيسي من اللاب هو الانطلاق من الصفر واستكشاف كل نقاط التفاعل والإدخال (Input Vectors) داخل الموقع للوصول إلى 5 أعلام (Flags) مخفية داخل قواعد البيانات. التحدي بيغطي تقنيات متنوعة تبدأ من الـ UNION Attack المباشر، مروراً بالـ Time-based Blind والـ AJAX Endpoints، وصولاً إلى ثغرة الحقن المزدوج (Nested / Secondary SQL Injection) وحقن الترويسات (HTTP Headers).
+المشين دي مش عن Root Access زي الماشينز التقليدية، دي عبارة عن (CTF-style Web Application) اسمها SQHell ومبنية بالكامل عشان تعلّمنا أنواع الـ SQL Injection المختلفة. فيه 5 Flags متوزعة على أماكن مختلفة في التطبيق، وكل Flag بتمثل نوع مختلف من الـ Injection، يعني إحنا مش بنستغل ثغرة واحدة وخلاص، إحنا بنمر على رحلة كاملة من الـ Authentication Bypass البسيط لحد الـ Blind SQL Injection عن طريق الـ HTTP Headers، وصولاً للـ UNION-based SQL Injection اليدوي.
 
 ---
 
 # Initial Enumeration
 
-# Phase 1: Network Scanning & Service Discovery
+# Phase 1: Network Scanning
 
-## أصل الأمر والمُدخلات (Execution Parameters)
-
+## Execution Parameters
 ```bash
 nmap -p- --min-rate 5000 10.129.160.119 -oN open_ports.txt
-
 ```
 
-## الأدلة والمخرجات (Evidence & Outputs)
+## Evidence & Outputs
+<p align="center">
+  <img src="SQHell-screens/step1.png" width="600">
+</p>
 
-## التحليل التقني (Technical Analysis)
+## Technical Analysis
 
-* **النتائج المكتشفة (Findings)**:
-* البورت `22/tcp` مفتوح وخادمه `OpenSSH 8.2p1 Ubuntu`.
-* البورت `80/tcp` مفتوح وخادمه `Apache httpd 2.4.41` على نظام `Ubuntu`.
+* **Findings**: فيه بورتين مفتوحين بس، `22/tcp` شغال عليه `ssh`، و `80/tcp` شغال عليه `http`.
+* **Impact**: مفيش أي خدمات تانية غريبة أو مثيرة للاهتمام، يبقى الهجوم هيكون بالكامل عن طريق الـ Web Application اللي شغالة على بورت 80.
+* **Assessment & Conclusions**: بما إن الـ SSH مش معاه أي Credentials معروفة دلوقتي، يبقى نقطة الدخول الوحيدة المتاحة هي الموقع نفسه.
 
+## Next Logical Step
 
-* **التأثير الأمني (Impact)**:
-* وجود بورت الـ SSH يتيح إمكانية الاتصال المباشر بالسيرفر في حال الحصول على بيانات دخول أو مفاتيح خاسرة (SSH Keys) لاحقاً.
-* وجود بورت الـ HTTP يمثل المدخل الرئيسي والوحيد لتطبيق الويب للبدء في اكتشاف وفحص الثغرات (Web Enumeration).
-
-
-* **الاستنتاج والتقييم (Assessment & Conclusions)**: لا توجد بيانات دخول افتراضية للـ SSH حالياً، لذا سينصب التركيز بنسبة 100% على فحص تطبيق الويب المتاح على البورت 80.
-
-## منطق أخصائي الاختراق (Pentester Rationale)
-
-بدء الفحص باستخدام أداة `nmap` يعتبر الخطوة الأساسية لكشف الأبواب المفتوحة والخدمات الشغالة على السيرفر لتحديد متجه الهجوم المناسب.
-
-## طرق هجومية بديلة (Alternative Attack Vectors)
-
-* **Rustscan**: بديل سريع جداً لفحص البورتات المفتوحة في ثوانٍ معدودة.
-* **Masscan**: ممتاز في حالة فحص نطاقات شبكية ضخمة.
-
-## الخطوة المنطقية التالية (Next Logical Step)
-
-فتح المتصفح وتصفح تطبيق الويب يدويًا لمعاينة الصفحات والروابط المتاحة وتحليل سلوك الموقع.
+فحص الـ Web Application وعمل Directory/Content Discovery لمعرفة الـ Endpoints المتاحة في التطبيق.
 
 ---
 
-# Web Enumeration
+# Phase 2: Web Content Discovery
 
-# Phase 2: Web Application Mapping & Exploration
-
-## أصل الأمر والمُدخلات (Execution Parameters)
-
-*(المعاينة والتفاعل اليدوي داخل المتصفح)*
-
-## الأدلة والمخرجات (Evidence & Outputs)
-
-## التحليل التقني (Technical Analysis)
-
-* **النتائج المكتشفة (Findings)**:
-* الموقع عبارة عن تطبيق مدونة (My Blog) ينشر مقالات من قِبل المستخدم `admin`.
-* عند الضغط على المقالات، يتم التوجيه للمسارات التالية: `/post?id=1` و `/post?id=2`.
-* توجد روابط أخرى أعلى الصفحة مثل صفحة تسجيل الدخول (`/login`) وصفحة إنشاء حساب جديد (`/register`).
-
-
-* **التأثير الأمني (Impact)**: وجود البرامتر `id` في مسار الـ URL يمثل نقطة تفاعل مباشرة مع قاعدة البيانات، مما يجعله مرشحاً أولياً لاختبار ثغرات SQL Injection.
-* **الاستنتاج والتقييم (Assessment & Conclusions)**: التطبيق يعتمد على برامترات متغيرة في الـ GET Requests، وسنبدأ باختبار البرامتر `id` في مسار المنشورات.
-
-## منطق أخصائي الاختراق (Pentester Rationale)
-
-المعاينة اليدوية للصفحات والروابط بتساعد الـ Pentester على فهم خريطة الموقع (Application Mapping) وتحديد الأماكن التي تتعامل مع قاعدة البيانات.
-
-## الخطوة المنطقية التالية (Next Logical Step)
-
-اختبار البرامتر `id` في المسار `/post?id=` للتحقق من وجود ثغرة SQL Injection من نوع UNION-Based.
-
----
-
-# Exploitation - Flag 1
-
-# Phase 3: In-band / UNION-Based SQL Injection on `/post?id=`
-
-## أصل الأمر والمُدخلات (Execution Parameters)
-
-```text
-[http://10.129.160.119/post?id=3](http://10.129.160.119/post?id=3)
-[http://10.129.160.119/post?id=3](http://10.129.160.119/post?id=3) union select 1,2-- -
-[http://10.129.160.119/post?id=3](http://10.129.160.119/post?id=3) union select 1,2,3,4-- -
-[http://10.129.160.119/post?id=3](http://10.129.160.119/post?id=3) union select 1,flag,3,4 from flag-- -
-
-```
-
-## الأدلة والمخرجات (Evidence & Outputs)
-
-## التحليل التقني (Technical Analysis)
-
-* **النتائج المكتشفة (Findings)**:
-* عند طلب `/post?id=3` المباشر أرجع التطبيق رسالة `Post not found` (في `step25.png`).
-* عند تجربة `/post?id=3 union select 1,2-- -` ظهرت رسالة خطأ صريحة من قاعدة البيانات: `The used SELECT statements have a different number of columns` (في `step26.png`).
-* زاد عدد الأعمدة إلى 4 في الاستعلام: `/post?id=3 union select 1,2,3,4-- -` فظهرت الأرقام `2` و `3` مطبوعة داخل الصفحة (في `step27.png`).
-* تم كتابة الـ Payload النهائي لاستخراج البيانات: `union select 1,flag,3,4 from flag-- -` (في `step28.png`).
-
-
-* **التأثير الأمني (Impact)**: الثغرة تسمح بتنفيذ استعلامات UNION حرة وقراءة أي بيانات من داخل جدول `flag`.
-* **الاستنتاج والتقييم (Assessment & Conclusions)**: نجاح استخراج الفلاج الأول المسمى Flag 1.
-
-## منطق أخصائي الاختراق (Pentester Rationale)
-
-رسائل الخطأ الصريحة من قاعدة البيانات بتسهل تحديد عدد الأعمدة (Columns) وتحديد الأماكن القابلة لطباعة البيانات (Reflected Columns) على الشاشة.
-
-## طرق هجومية بديلة (Alternative Attack Vectors)
-
-* **SQLMap**: استخدام الأمر `sqlmap -u "http://10.129.160.119/post?id=1" --dump`.
-
-## الخطوة المنطقية التالية (Next Logical Step)
-
-البحث عن الثغرات المتبقية في الأجزاء الأخرى من الموقع لاستخراج الفلاجات التالية.
-
----
-
-# Exploitation - Flag 2
-
-# Phase 4: Time-Based Blind SQL Injection Automated Extraction
-
-## أصل الأمر والمُدخلات (Execution Parameters)
-
+## Execution Parameters
 ```bash
-sqlmap -u "[http://10.129.160.119/](http://10.129.160.119/)..." --dbms=MySQL --dump -batch
-
+dirsearch -u http://10.129.160.119
 ```
 
-## الأدلة والمخرجات (Evidence & Outputs)
+## Evidence & Outputs
+<p align="center">
+  <img src="SQHell-screens/step2.png" width="600">
+</p>
 
-## التحليل التقني (Technical Analysis)
+## Technical Analysis
 
-* **النتائج المكتشفة (Findings)**:
-* أداة `sqlmap` كشفت عن وجود ثغرة Time-Based Blind SQL Injection في إحدى مسارات التطبيق.
-* أظهرت المخرجات وجود جدول اسمه `flag` داخل قاعدة البيانات `sqhell_1`.
-* تم استخراج القيمة المكونة للـ Flag 2 وهي: `THM{FLAG2:C678ABFE1C01FCA19E03901CEDAB1D15}`.
+* **Findings**: الأداة رجعتلنا 4 Endpoints أساسية بترجع كود `200`: `/login`, `/post`, `/register`, و `/user`.
+* **Impact**: الـ Endpoints دي بتدي إشارة واضحة إن التطبيق فيه نظام Users كامل (Login/Register) ونظام Posts (Blog)، وده معناه غالباً فيه Parameters بتتبعت للـ Database بشكل مباشر.
+* **Assessment & Conclusions**: كل Endpoint من دول هيبقى نقطة اختبار محتملة لثغرات الـ SQL Injection، وهنبدأ نفحصهم واحد واحد.
 
+## Next Logical Step
 
-* **التأثير الأمني (Impact)**: القدرة على استخراج البيانات حتى في عدم وجود مخرجات صريحة على الصفحة، اعتماداً على تأخير زمن الاستجابة (Sleep Delays).
-* **الاستنتاج والتقييم (Assessment & Conclusions)**: تم الحصول على العلم الثاني (Flag 2) بنجاح.
-
-## منطق أخصائي الاختراق (Pentester Rationale)
-
-الاعتماد على الأتمتة في ثغرات الـ Time-Based Blind يوفر وقتاً ضخماً لأن الاستخراج اليدوي يعتمد على تخمين الحروف حرفاً بحرف مع الانتظار الزمني لكل شرط.
-
-## طرق هجومية بديلة (Alternative Attack Vectors)
-
-* كتابة سكريبت Python خاص للتحقق من الاستجابة الزمنية باستخدام مكتبة `requests`.
-
-## الخطوة المنطقية التالية (Next Logical Step)
-
-الانتقال لفحص صفحة تسجيل الحساب (`/register`) والتأكد من وجود أي طلبات خلفية تعمل بالـ AJAX.
+فتح التطبيق يدوياً في المتصفح لمعاينة الشكل العام وفهم طبيعة الـ Blog والـ Posts المتاحة.
 
 ---
 
-# Exploitation - Flag 3
+# Phase 3: Manual Application Walkthrough
 
-# Phase 5: Registration AJAX Endpoint Analysis & SQLi Extraction
+## Execution Parameters
 
-## أصل الأمر والمُدخلات (Execution Parameters)
+*(Manual browsing via the web browser to map application structure and functionality)*
 
+## Evidence & Outputs
+<p align="center">
+  <img src="SQHell-screens/step3.png" width="600">
+</p>
+
+## Technical Analysis
+
+* **Findings**: الصفحة الرئيسية عبارة عن "My Blog" فيها Posts منشورة بواسطة يوزر اسمه `admin`، وفيه رابط في الأسفل اسمه `Terms & Conditions`، وكمان أزرار `Login` و `Register` في الأعلى.
+* **Impact**: كل نقطة من دول (الـ Login form، رابط الـ Terms & Conditions، والـ Posts نفسها) بتاخد Input ممكن تتفحص لثغرات الـ SQLi.
+* **Assessment & Conclusions**: التطبيق فيه أكتر من نقطة دخول محتملة، فهنبدأ بالأسهل وهو نافذة تسجيل الدخول (Login Form).
+
+## Next Logical Step
+
+اختبار حقول اليوزرنيم والباسورد في صفحة الـ Login بمحاولة Bypass كلاسيكي للـ Authentication.
+
+---
+
+# Vulnerability Analysis & Exploitation
+
+# Phase 4: Flag 1 — Authentication Bypass via SQL Injection
+
+## Execution Parameters
+```
+Username: ' or 1=1 -- -
+Password: (empty)
+```
+
+## Evidence & Outputs
+<p align="center">
+  <img src="SQHell-screens/step4.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step5.png" width="600">
+</p>
+
+## Technical Analysis
+
+* **Findings**: الاستعلام اللي التطبيق بيعمله على الأغلب بيبقى شكله كدا:
+  `SELECT * FROM users WHERE username = '$username' AND password = '$password'`
+  وبإدخال `' or 1=1 -- -` في خانة اليوزرنيم، الـ Query بيتحول لـ `WHERE username = '' or 1=1 -- -' AND password = ''`، وبما إن `1=1` دايماً True، الشرط بيتحقق ويتم تجاوز التحقق بالكامل.
+* **Impact**: ده مثال كلاسيكي على (Authentication Bypass via SQL Injection)، وأدى بشكل مباشر للدخول كأول يوزر موجود في الجدول والحصول على `Flag 1`: `THM{FLAG1:E786483E5A53075750F1FA792E823BD2}`.
+* **Assessment & Conclusions**: الحقن ده بسيط لأنه Error-based/Logic-based وواضح، لكن ده مؤشر خطير إن باقي التطبيق ممكن يبقى معرض لنفس المشكلة، وباقي الـ Endpoints غالباً هتحتاج طرق Injection أعمق.
+
+## Pentester Rationale
+
+اختبار الـ Payloads الكلاسيكية زي `' or 1=1 -- -` هو أول حاجة أي Pentester بيجربها على أي Login Form قبل ما يستخدم أدوات آلية، لأنها بتكشف بسرعة لو التطبيق مبنى بطريقة غير آمنة (String Concatenation بدون Parameterized Queries).
+
+## Alternative Attack Vectors
+
+* `admin' -- -`
+* `" or 1=1 -- -` (لو الـ Query بتستخدم Double Quotes)
+
+## Next Logical Step
+
+الانتقال لصفحة الـ `Terms & Conditions` واختبار الـ HTTP Headers للبحث عن Injection Points غير مباشرة (Blind SQLi).
+
+---
+
+# Phase 5: Flag 2 — Blind SQL Injection via HTTP Header (X-Forwarded-For)
+
+## Execution Parameters
 ```bash
-# فحص نقطة الـ AJAX المكتشفة عبر Burp Repeater
-sqlmap -u "[http://10.129.160.119/register/user-check?username=x](http://10.129.160.119/register/user-check?username=x)" --dbms=MySQL --dump -batch
-
+sqlmap --dbms=mysql --headers="X-Forwarded-For: 1*" -u http://10.129.160.119/terms-and-conditions --dbs --batch
 ```
 
-## الأدلة والمخرجات (Evidence & Outputs)
+## Evidence & Outputs
+<p align="center">
+  <img src="SQHell-screens/step6.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step7.png" width="600">
+</p>
 
-## التحليل التقني (Technical Analysis)
+## Technical Analysis
 
-* **النتائج المكتشفة (Findings)**:
-* أثناء كتابة اسم مستخدم جديد مثل `abcd` تظهر عبارة `Username available` باللون الأخضر (في `step10.png`).
-* عند كتابة `admin` تظهر عبارة `Username already taken` باللون الأحمر (في `step11.png`).
-* اعتراض الطلب في أداة Burp Suite أظهر وجود مسار خلفي: `GET /register/user-check?username=admin` (في `step12.png`).
-* تشغيل أداة `sqlmap` على هذا المسار أثبت وجود ثغرة SQL Injection وتم استخراج بيانات القاعدة `sqhell_3` وجدول `flag` (في `step21.png`).
+* **Findings**: التطبيق بيسجل الـ IP بتاع الزائر عن طريق قراءة الـ Header بتاع `X-Forwarded-For` ومن غير ما يعمله أي `Sanitization`، وسقلماب أكد إن الباراميتر ده Injectable وإن الـ Back-end DBMS هو MySQL (نسخة 5.0.12 فما فوق) عن طريق Time-based Blind technique.
+* **Impact**: ده يبين إن الثغرة مش لازم تبقى في الـ GET/POST Parameters بس، ممكن تبقى في أي Header بيتقرأ ويتخزن في الـ Database زي `X-Forwarded-For`، `User-Agent`، `Referer`.. إلخ. ده معناه إن أي حد يقدر يزور الـ Header ده ويحقن كود SQL من غيره ما يحتاج حتى يدخل بيانات في فورم ظاهر.
+* **Assessment & Conclusions**: بما إننا أثبتنا إن الـ Injection شغال، الخطوة الجاية هي استخدام سقلماب في استخراج أسماء الـ Databases والجداول والأعمدة المخزنة، وبالفعل ظهرت قاعدة بيانات باسم `sqhell_1`.
 
+## Pentester Rationale
 
-* **التأثير الأمني (Impact)**: الحصول على قيمة Flag 3 وهي: `THM{FLAG3:97AEB3B28A4864416718F3A5FAF8F308}`.
-* **الاستنتاج والتقييم (Assessment & Conclusions)**: البرامتر الخاص بالتحقق التلقائي من أسماء المستخدمين كان غير محمي ومصاباً بالحقن.
+استخدام سقلماب هنا بدل الاستغلال اليدوي كان قرار منطقي، لأن الثغرة دي من نوع (Time-based Blind) واللي بتحتاج آلاف الطلبات لاستخراج البيانات حرف حرف، وده مستحيل يتعمل يدوياً بكفاءة.
 
-## منطق أخصائي الاختراق (Pentester Rationale)
+## Alternative Attack Vectors
 
-مراقبة طلبات الـ Background AJAX بكاميرا Burp Suite تعتبر خطوة أساسية لأن المطورين غالباً بيهملوا تأمين الـ Endpoints الجانبية مقارنة بالصفحات الرئيسية.
+* حقن باراميترات أخرى زي `User-Agent` أو `Referer` بنفس الطريقة.
+* استخدام `Burp Suite Intruder` لعمل Manual Time-based Testing.
 
-## طرق هجومية بديلة (Alternative Attack Vectors)
+## Next Logical Step
 
-* استغلال الثغرة يدوياً بـ Boolean-Based Blind SQLi عبر مقارنة ردود الفعل بين `Username available` و `Username already taken`.
-
-## الخطوة المنطقية التالية (Next Logical Step)
-
-الانتقال لفحص مسار مستخدمين آخرين وتحديداً المسار `/user?id=`.
+بما إن قاعدة البيانات `sqhell_1` ظهرت، الخطوة الجاية استكمال الـ Dump على جدول الـ `flag` نفسه لاستخراج قيمة الـ Flag رقم 2.
 
 ---
 
-# Exploitation - Flag 4
+# Phase 6: Flag 2 — Dumping the Flag Table
 
-# Phase 6: Deep Dive into `/user?id=` & Nested SQL Injection Discovery
-
-## أصل الأمر والمُدخلات (Execution Parameters)
-
-```text
-[http://10.129.160.119/user?id=2](http://10.129.160.119/user?id=2) union select 1,3,3-- -
-[http://10.129.160.119/user?id=2](http://10.129.160.119/user?id=2) union select 3,3,3-- -
-[http://10.129.160.119/user?id=2](http://10.129.160.119/user?id=2) union select '1 union select 1',2,3-- -
-[http://10.129.160.119/user?id=2](http://10.129.160.119/user?id=2) union select '1 union select 1,2,3',2,3-- -
-[http://10.129.160.119/user?id=2](http://10.129.160.119/user?id=2) union select '1 union select 1,2,3,4',2,3-- -
-[http://10.129.160.119/user?id=2](http://10.129.160.119/user?id=2) union select '2 union select 1,2,3,4',2,3-- -
-[http://10.129.160.119/user?id=2](http://10.129.160.119/user?id=2) union select '2 union select 1,flag,3,4 from flag',2,3-- -
-
+## Execution Parameters
+```bash
+sqlmap --dbms=mysql --headers="X-Forwarded-For: 1*" -u http://10.130.140.213/terms-and-conditions -D sqhell_1 -T flag --dump
 ```
 
-## الأدلة والمخرجات (Evidence & Outputs)
+## Evidence & Outputs
+<p align="center">
+  <img src="SQHell-screens/step8.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step9.png" width="600">
+</p>
 
-## التحليل التقني (Technical Analysis)
+## Technical Analysis
 
-* **النتائج المكتشفة (Findings)**:
-* في `step13.png` و `step14.png`: تم تجربة `UNION SELECT` عادية وتبين أن القيمة في العمود الثاني هي التي تعرض مكان اسم المستخدم (Username).
-* في `step15.png` إلى `step18.png`: تبين أن القيمة التي تُرجع كـ Username يتم أخذها واستخدامها مرة أخرى داخل استعلام ثاني في قاعدة البيانات (Secondary / Nested Query).
-* عند وضع نص يحتوي على `1 union select 1,2,3,4` داخل خانة اسم المستخدم المرجعة، قام التطبيق بتنفيذ الاستعلام الداخلي وأظهر رقم `2` في قسم المنشورات (Posts)!
-* في `step19.png` و `step20.png`: تم صياغة الـ Nested Payload النهائي:
-```text
+* **Findings**: عن طريق تحديد الـ Database والـ Table بشكل مباشر لسقلماب (`-D sqhell_1 -T flag --dump`)، تم استخراج محتوى جدول `flag` كاملاً، وطلع بيه صف واحد (Row) قيمته: `THM{FLAG2:C678ABFE1C01FCA19E03901CEDAB1D15}`.
+* **Impact**: ده بيأكد إن كل Flag في الماشين دي متخزنة في جدول منفصل اسمه `flag` جوه كل Database، وبمجرد ما نقدر نعمل Injection في أي مكان، نقدر نوصل للجدول ده بسهولة.
+* **Assessment & Conclusions**: تم الحصول على `Flag 2` بنجاح عن طريق (Header-based Blind SQL Injection). دلوقتي محتاجين نلاقي نقاط Injection تانية في باقي الـ Endpoints (`/register`, `/user`, `/post`) لاستخراج باقي الـ Flags.
+
+## Next Logical Step
+
+فحص صفحة الـ Register، وتحديداً أي Endpoint فرعي بيتعامل مع التحقق من اليوزرنيم (زي `user-check`)، لاختبار وجود Injection تاني هناك.
+
+---
+
+# Phase 7: Flag 3 — Blind SQL Injection via Register / User-Check Endpoint
+
+## Execution Parameters
+```bash
+sqlmap -u "http://10.129.160.119/register/user-check?username=x" --dbms=MySQL --dump --batch
+```
+
+## Evidence & Outputs
+<p align="center">
+  <img src="SQHell-screens/step10.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step11.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step12.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step21.png" width="600">
+</p>
+
+## Technical Analysis
+
+* **Findings**: صفحة الـ Register بتستخدم نظام (Live Username Availability Check) عن طريق طلب AJAX بيروح لـ Endpoint اسمه `/register/user-check?username=...`، وده باراميتر GET بيتبعت مباشرة لجملة SQL للتحقق هل اليوزرنيم متسجل قبل كدا ولا لأ (زي ما ظهر لما جربنا `abcd` كانت متاحة و`admin` كانت `Username already taken`). سقلماب أكد إن الباراميتر ده Injectable بنفس أسلوب الـ Time-based Blind.
+* **Impact**: نقطة الـ (Live Validation Endpoints) دي غالباً بتتنسى من المطورين وقت التأمين لأنها مش Form رئيسي، لكنها بتتعامل مع الداتابيز بنفس القدر من الخطورة.
+* **Assessment & Conclusions**: عن طريق سقلماب اتعمل Dump على جدول `flag` في database `sqhell_3` وطلعت `Flag 3`: `THM{FLAG3:97AEB3B28A4864416718F3A5FA8F308}`، وكمان بدأ سقلماب يجيب أعمدة جدول `users` (`id`, `password`, `username`) استعداداً لأي استخدام إضافي.
+
+## Pentester Rationale
+
+فحص كل Endpoint بيتفاعل مع الداتابيز، حتى لو مش فورم رئيسي زي أزرار الـ Live-check أو الـ Autocomplete، لأن أي Request بيتبعت من غير Input Validation ممكن يبقى نقطة حقن.
+
+## Alternative Attack Vectors
+
+* اختبار الـ Endpoint نفسه عن طريق `Burp Suite Repeater` يدوياً بدل الاعتماد الكلي على سقلماب.
+
+## Next Logical Step
+
+الانتقال لصفحة الـ `/user?id=` واختبار إمكانية عمل UNION-based SQL Injection يدوي بدل الاعتماد على الأدوات الآلية.
+
+---
+
+# Phase 8: Flag 4 — Manual UNION-Based SQL Injection on `/user` Endpoint
+
+## Execution Parameters
+```
+/user?id=2 union select 1,3,3-- -
+/user?id=2 union select 3,3,3-- -
+/user?id=2 union select '1 union select 1',2,3-- -
+/user?id=2 union select '1 union select 1,2,3',2,3-- -
+/user?id=2 union select '1 union select 1,2,3,4',2,3-- -
+/user?id=2 union select '2 union select 1,2,3,4',2,3-- -
 /user?id=2 union select '2 union select 1,flag,3,4 from flag',2,3-- -
-
 ```
 
+## Evidence & Outputs
+<p align="center">
+  <img src="SQHell-screens/step13.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step14.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step15.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step16.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step17.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step18.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step19.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step20.png" width="600">
+</p>
 
-فتمكننا من طباعة الفلاج الرابع مباشرة داخل قسم الـ Posts:
-`THM{FLAG4:BDF317B14EEF80A3F90729BF2B426BEF}`.
+## Technical Analysis
 
+* **Findings**: التطبيق بيعرض القيمة اللي جاية من العمود التاني (Username) في الصفحة، فبدأنا نستغل ده عن طريق حقن `UNION SELECT` جوه القيمة نفسها اللي بترجع كـ Username. لاحظنا إن الاستعلام الأساسي بيرجع 3 أعمدة، وبتجربة عدد أعمدة الـ UNION الداخلي لحد ما وصلنا لعدد صحيح (4 أعمدة)، وبعدين استبدلنا العمود التاني في الـ Query الداخلي بـ `flag` من جدول `flag` عشان نطلعه في الـ Posts.
+* **Impact**: ده مثال على (Nested / Second-Order UNION-based SQL Injection)، فين الـ Payload بيتحقن جوه قيمة بترجع من استعلام تاني، وده أعقد من الـ UNION العادي لأنه محتاج فهم دقيق لعدد الأعمدة وترتيبها في أكتر من مستوى.
+* **Assessment & Conclusions**: بعد سلسلة من التجارب المتدرجة، ظهرت `Flag 4` جوه قائمة الـ Posts بتاعة اليوزر: `THM{FLAG4:BDF317B14EEF80A3F90729BF2B426BEF}`.
 
-* **التأثير الأمني (Impact)**: استغلال ثغرة متقدمة من نوع Nested SQL Injection تسمح بالالتفاف على الاستعلامات المزدوجة داخل التطبيق.
-* **الاستنتاج والتقييم (Assessment & Conclusions)**: تم الحصول على Flag 4 بنجاح.
+## Pentester Rationale
 
-## منطق أخصائي الاختراق (Pentester Rationale)
+بناء الـ Payload بشكل تدريجي (Column count enumeration خطوة خطوة) هو أسلوب أساسي في أي UNION-based SQLi، لأن أي غلط في عدد الأعمدة أو نوعها بيرجع Error بيوقف الاستغلال تماماً.
 
-فهم طريقة معالجة التطبيق للبيانات المرجعة (Second-Order / Secondary Execution) بيساعد الـ Pentester على ابتكار payloads مزدوجة لاستغلال الثغرات التي تتطلب أكثر من مرحلة لتنفيذ الكود.
+## Alternative Attack Vectors
 
-## طرق هجومية بديلة (Alternative Attack Vectors)
+* استخدام `ORDER BY` لتحديد عدد الأعمدة بسرعة بدل التجربة اليدوية بالـ UNION.
+* استخدام سقلماب مباشرة على باراميتر `id` لو الوقت مش عامل ضغط.
 
-* استخدام أداة Burp Suite Repeater لتسريع تجربة تركيب الـ Nested Queries دون الحاجة لإعادتها يدوياً في المتصفح.
+## Next Logical Step
 
-## الخطوة المنطقية التالية (Next Logical Step)
-
-استكمال فحص باقي الأجزاء المتبقية لاستخراج Flag 5 وحل المشين بالكامل.
+تطبيق نفس أسلوب الـ UNION-based Injection على Endpoint مشابه وهو `/post?id=` لاستخراج الـ Flag الأخيرة.
 
 ---
 
-# Exploitation - Flag 5
+# Phase 9: Flag 5 — Manual UNION-Based SQL Injection on `/post` Endpoint
 
-# Phase 7: Header-Based Injection & Final System Takeover
-
-## أصل الأمر والمُدخلات (Execution Parameters)
-
-```text
-# فحص ترويسات الـ HTTP عبر Burp Suite
-X-Forwarded-For: 127.0.0.1' UNION SELECT 1,flag,3,4 FROM flag-- -
-
+## Execution Parameters
+```
+/post?id=1
+/post?id=2
+/post?id=3                       -> Post not found
+/post?id=3 union select 1,2-- -  -> column count mismatch
+/post?id=3 union select 1,2,3,4-- -
+/post?id=3 union select 1,flag,3,4 from flag-- -
 ```
 
-## الأدلة والمخرجات (Evidence & Outputs)
+## Evidence & Outputs
+<p align="center">
+  <img src="SQHell-screens/step22.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step23.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step24.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step25.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step26.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step27.png" width="600">
+</p>
+<p align="center">
+  <img src="SQHell-screens/step28.png" width="600">
+</p>
 
-## التحليل التقني (Technical Analysis)
+## Technical Analysis
 
-* **النتائج المكتشفة (Findings)**:
-* النقطة الأخيرة كانت تعتمد على استغلال حقن الترويسات (HTTP Header SQL Injection) عبر ترويسات مثل `X-Forwarded-For` أو صفحات الشروط والأحكام.
-* تم استخراج العلم الخامس بنجاح واستكمال كافة متطلبات الغرفة بنسبة 100%.
+* **Findings**: باراميتر `id` بتاع صفحة `/post` جربنا عليه رقم مش موجود (`id=3`) فرجع "Post not found"، وده مؤشر إن الاستعلام بيتنفذ فعلياً على الداتابيز مش مجرد Static Page. بعد كدا جربنا `UNION SELECT` بعمودين فرجع Error بيقول "The used SELECT statements have a different number of columns"، وده أكد إن فيه Injection شغال وكشف لينا معلومة عن عدد الأعمدة. لما رفعنا العدد لـ 4 أعمدة اشتغلت الصفحة عادي وظهرت القيم اللي بعتناها.
+* **Impact**: التطبيق مفيهوش أي Error Handling أو Filtering على رسايل الأخطاء بتاعة الداتابيز، وده بيدي الـ Attacker معلومة قيمة جداً (عدد الأعمدة) من غير ما يحتاج حتى أداة آلية زي سقلماب (Error-based enumeration).
+* **Assessment & Conclusions**: بعد ما ثبتنا عدد الأعمدة (4)، استبدلنا أحد الأعمدة باستعلام فرعي `(select flag from flag)` عشان نطلع قيمة الـ Flag الأخيرة `Flag 5` مباشرة في صفحة الـ Post، وبكدا اكتملت كل الـ 5 Flags المطلوبة في الماشين.
 
+## Pentester Rationale
 
-* **التأثير الأمني (Impact)**: كشف جميع الفلاجات الـ 5 المطلوبة داخل تحدي SQHell.
-* **الاستنتاج والتقييم (Assessment & Conclusions)**: اكتمل حل المشين بالكامل بنسبة 100%.
+الاعتماد على رسائل الأخطاء الافتراضية بتاعة الداتابيز (Error-based technique) هي من أسرع الطرق لتحديد عدد الأعمدة قبل استخدام UNION، وده وفر وقت كبير بدل التجربة العشوائية.
+
+## Alternative Attack Vectors
+
+* استخدام تقنية `ORDER BY N-- -` لتحديد عدد الأعمدة بشكل أسرع وأنضف.
+* تشغيل سقلماب مباشرة على `/post?id=` لتأكيد النتيجة آلياً.
+
+## Assessment Summary
+
+بعد اجتياز الـ 5 مراحل دول، بقى واضح إن ماشين SQHell هدفها الأساسي إنها توضح إزاي نفس الثغرة (SQL Injection) ممكن تظهر بأشكال مختلفة جداً في نفس التطبيق: 
+
+- مرة كـ **Authentication Bypass** بسيط في Login Form.
+- ومرة كـ **Blind/Time-based Injection** مخفية جوه HTTP Header.
+- ومرة تانية في Endpoint فرعي زي **Live Username Check**.
+- ومرتين كـ **UNION-based Injection** يدوي في Endpoints بترجع بيانات ظاهرة (User Profile / Blog Post).
+
+وده بيأكد إن أي Input بيوصل للداتابيز — سواء كان Form ظاهر، Header، أو حتى AJAX Request صغير — لازم يتعامل معاه بنفس مستوى الحرص والـ Sanitization.
 
 ---
 
-# جدول الأعلام المكتشفة (Flags Summary)
+# Flags
 
-| نوع العلم | مكان ومسار الثغرة | قيمة الهاش المكتشفة (Flag Token Value) |
-| --- | --- | --- |
-| **Flag 1** | In-band UNION SQLi (`/post?id=3`) | `THM{FLAG1:E786483E5A53075750F1FA792E83BD2}` |
-| **Flag 2** | Time-based Blind SQLi (`sqhell_1.flag`) | `THM{FLAG2:C678ABFE1C01FCA19E03901CEDAB1D15}` |
-| **Flag 3** | AJAX User Check (`/register/user-check`) | `THM{FLAG3:97AEB3B28A4864416718F3A5FAF8F308}` |
-| **Flag 4** | Nested / Secondary SQLi (`/user?id=2`) | `THM{FLAG4:BDF317B14EEF80A3F90729BF2B426BEF}` |
-| **Flag 5** | Header-Based SQLi / Final Challenge | `THM{FLAG5:B9C690D3B914F7038BA1FC65B3...}` |
+| Flag | Injection Type | Location / Endpoint | Flag Value |
+| --- | --- | --- | --- |
+| **Flag 1** | Authentication Bypass (Classic SQLi) | `/login` | `THM{FLAG1:E786483E5A53075750F1FA792E823BD2}` |
+| **Flag 2** | Blind / Time-based SQLi (HTTP Header) | `/terms-and-conditions` via `X-Forwarded-For` | `THM{FLAG2:C678ABFE1C01FCA19E03901CEDAB1D15}` |
+| **Flag 3** | Blind / Time-based SQLi | `/register/user-check?username=` | `THM{FLAG3:97AEB3B28A4864416718F3A5FA8F308}` |
+| **Flag 4** | Nested UNION-based SQLi | `/user?id=` | `THM{FLAG4:BDF317B14EEF80A3F90729BF2B426BEF}` |
+| **Flag 5** | Error-based Column Enumeration + UNION-based SQLi | `/post?id=` | `THM{FLAG5:B9C690D3B914F7038BA1FC65B3...}` |
 
----
+<p align="center">
+  <img src="SQHell-screens/photo3.jpg" width="400">
+</p>
 
-# المراجع والروابط الخارجية (References & Resources)
-
-* OWASP Testing Guide: SQL Injection (SQLi) Vulnerabilities.
-* PortSwigger Web Security Academy: SQL Injection Techniques & Nested Queries.
-* SQLMap Automated Penetration Testing Tool Documentation.
-* TryHackMe - SQHell Room Official Link.
+* OWASP Testing Guide — SQL Injection.
+* PortSwigger Web Security Academy — Blind & UNION-based SQL Injection.
+* sqlmap Official Documentation.
+* TryHackMe - SQHell Room Link.
