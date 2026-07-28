@@ -1,4 +1,4 @@
-<div dir="rtl" align="right">
+<div dir="rtl" style="text-align: right; width: 100%; word-wrap: break-word; overflow-wrap: break-word;">
 
 <p align="center">
   <img src="SQHell-screens/photo0.jpg" width="600">
