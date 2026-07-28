@@ -14,47 +14,23 @@
 # Lab Overview
 المشين دي عبارة عن بيئة اختبار اختراق متخصصة في (SQL Injection) بمختلف أنواعها وأشكالها على تطبيقات الويب. الهدف الرئيسي من اللاب هو الانطلاق من الصفر واستكشاف كل ال(Input Vectors) داخل الموقع للوصول إلى 5 أعلام (Flags) مخفية داخل قواعد البيانات. التحدي بيغطي تقنيات متنوعة تبدأ من الـ UNION Attack المباشر، مروراً بالـ Time-based Blind والـ AJAX Endpoints، وصولاً إلى  (Nested / Secondary SQL Injection) وحقن الترويسات (HTTP Headers).
 
----
 
 # Initial Enumeration
 
 # Phase 1: Network Scanning & Service Discovery
 
 ## Execution Parameters
-```bash
+
 nmap -sV -Pn 10.129.160.119
+
 <div dir="rtl" align="right">
 
 <p align="center">
   <img src="SQHell-screens/photo3.jpg" width="600">
 </p>
 
-# تقرير اختراق غرفة SQHell | Write-Up
 
-- **اسم الماكينة**: SQHell
-- **المنصة**: TryHackMe
-- **مستوى الصعوبة**: المتوسط (Medium)
-- **المواضيع المغطاة**: فحص الويب (Web Enumeration)، ثغرات SQL Injection بجميع أنواعها (Union-Based, Time-Based Blind, Error-Based, Nested/Secondary Injection, Header-Based Injection)، الأتمتة باستعمال `sqlmap`[cite: 1]، واعتراض الطلبات عبر `Burp Suite`.
-
----
-
-# نظرة عامة على التحدي (Lab Overview)
-
-المشين دي عبارة عن بيئة اختبار اختراق متخصصة في ثغرات حقن الاستعلامات (SQL Injection) بمختلف أنواعها وأشكالها على تطبيقات الويب. الهدف الرئيسي من اللاب هو الانطلاق من الصفر واستكشاف كل نقاط التفاعل والإدخال (Input Vectors) داخل الموقع للوصول إلى 5 أعلام (Flags) مخفية داخل قواعد البيانات. التحدي بيغطي تقنيات متنوعة تبدأ من الـ UNION Attack المباشر، مروراً بالـ Time-based Blind والـ AJAX Endpoints، وصولاً إلى ثغرة الحقن المزدوج (Nested / Secondary SQL Injection) وحقن الترويسات (HTTP Headers).
-
----
-
-# الفحص الأول للشبكة (Initial Enumeration)
-
-# المرحلة 1: فحص البورتات والخدمات (Network Scanning & Service Discovery)
-
-## أصل الأمر والمُدخلات (Execution Parameters)
-```bash
-nmap -sV -Pn 10.129.160.119
-
-```
-
-## الأدلة والمخرجات (Evidence & Outputs)
+## (Evidence & Outputs)
 
 *(يمكنك إضافة صورة الـ Nmap Scan هنا)*
 
