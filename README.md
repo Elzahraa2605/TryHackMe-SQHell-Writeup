@@ -1,4 +1,4 @@
-<div dir="rtl" style="text-align: right; width: 100%; word-wrap: break-word; overflow-wrap: break-word;">
+<div dir="rtl" style="text-align: right; width: 100%; word-wrap: break-word; overflow-wrap: break-word; line-height: 2; letter-spacing: 0.2px;">
 
 <p align="center">
   <img src="SQHell-screens/photo0.jpg" width="600">
@@ -60,7 +60,9 @@ dirsearch -u http://10.129.160.119
 ## Technical Analysis
 
 * **Findings**: الأداة رجعتلنا 4 Endpoints أساسية بترجع كود `200`: `/login`, `/post`, `/register`, و `/user`.
+  
 * **Impact**: الـ Endpoints دي بتدي إشارة واضحة إن التطبيق فيه نظام Users كامل (Login/Register) ونظام Posts (Blog)، وده معناه غالباً فيه Parameters بتتبعت للـ Database بشكل مباشر.
+  
 * **Assessment & Conclusions**: كل Endpoint من دول هيبقى نقطة اختبار محتملة لثغرات الـ SQL Injection، وهنبدأ نفحصهم واحد واحد.
 
 ## Next Logical Step
@@ -151,7 +153,9 @@ sqlmap --dbms=mysql --headers="X-Forwarded-For: 1*" -u http://10.129.160.119/ter
 ## Technical Analysis
 
 * **Findings**: التطبيق بيسجل الـ IP بتاع الزائر عن طريق قراءة الـ Header بتاع `X-Forwarded-For` ومن غير ما يعمله أي `Sanitization`، وسقلماب أكد إن الباراميتر ده Injectable وإن الـ Back-end DBMS هو MySQL (نسخة 5.0.12 فما فوق) عن طريق Time-based Blind technique.
+  
 * **Impact**: ده يبين إن الثغرة مش لازم تبقى في الـ GET/POST Parameters بس، ممكن تبقى في أي Header بيتقرأ ويتخزن في الـ Database زي `X-Forwarded-For`، `User-Agent`، `Referer`.. إلخ. ده معناه إن أي حد يقدر يزور الـ Header ده ويحقن كود SQL من غيره ما يحتاج حتى يدخل بيانات في فورم ظاهر.
+  
 * **Assessment & Conclusions**: بما إننا أثبتنا إن الـ Injection شغال، الخطوة الجاية هي استخدام سقلماب في استخراج أسماء الـ Databases والجداول والأعمدة المخزنة، وبالفعل ظهرت قاعدة بيانات باسم `sqhell_1`.
 
 ## Pentester Rationale
@@ -187,7 +191,9 @@ sqlmap --dbms=mysql --headers="X-Forwarded-For: 1*" -u http://10.130.140.213/ter
 ## Technical Analysis
 
 * **Findings**: عن طريق تحديد الـ Database والـ Table بشكل مباشر لسقلماب (`-D sqhell_1 -T flag --dump`)، تم استخراج محتوى جدول `flag` كاملاً، وطلع بيه صف واحد (Row) قيمته: `THM{FLAG2:C678ABFE1C01FCA19E03901CEDAB1D15}`.
+  
 * **Impact**: ده بيأكد إن كل Flag في الماشين دي متخزنة في جدول منفصل اسمه `flag` جوه كل Database، وبمجرد ما نقدر نعمل Injection في أي مكان، نقدر نوصل للجدول ده بسهولة.
+  
 * **Assessment & Conclusions**: تم الحصول على `Flag 2` بنجاح عن طريق (Header-based Blind SQL Injection). دلوقتي محتاجين نلاقي نقاط Injection تانية في باقي الـ Endpoints (`/register`, `/user`, `/post`) لاستخراج باقي الـ Flags.
 
 ## Next Logical Step
@@ -220,7 +226,9 @@ sqlmap -u "http://10.129.160.119/register/user-check?username=x" --dbms=MySQL --
 ## Technical Analysis
 
 * **Findings**: صفحة الـ Register بتستخدم نظام (Live Username Availability Check) عن طريق طلب AJAX بيروح لـ Endpoint اسمه `/register/user-check?username=...`، وده باراميتر GET بيتبعت مباشرة لجملة SQL للتحقق هل اليوزرنيم متسجل قبل كدا ولا لأ (زي ما ظهر لما جربنا `abcd` كانت متاحة و`admin` كانت `Username already taken`). سقلماب أكد إن الباراميتر ده Injectable بنفس أسلوب الـ Time-based Blind.
+  
 * **Impact**: نقطة الـ (Live Validation Endpoints) دي غالباً بتتنسى من المطورين وقت التأمين لأنها مش Form رئيسي، لكنها بتتعامل مع الداتابيز بنفس القدر من الخطورة.
+  
 * **Assessment & Conclusions**: عن طريق سقلماب اتعمل Dump على جدول `flag` في database `sqhell_3` وطلعت `Flag 3`: `THM{FLAG3:97AEB3B28A4864416718F3A5FA8F308}`، وكمان بدأ سقلماب يجيب أعمدة جدول `users` (`id`, `password`, `username`) استعداداً لأي استخدام إضافي.
 
 ## Pentester Rationale
@@ -279,7 +287,9 @@ sqlmap -u "http://10.129.160.119/register/user-check?username=x" --dbms=MySQL --
 ## Technical Analysis
 
 * **Findings**: التطبيق بيعرض القيمة اللي جاية من العمود التاني (Username) في الصفحة، فبدأنا نستغل ده عن طريق حقن `UNION SELECT` جوه القيمة نفسها اللي بترجع كـ Username. لاحظنا إن الاستعلام الأساسي بيرجع 3 أعمدة، وبتجربة عدد أعمدة الـ UNION الداخلي لحد ما وصلنا لعدد صحيح (4 أعمدة)، وبعدين استبدلنا العمود التاني في الـ Query الداخلي بـ `flag` من جدول `flag` عشان نطلعه في الـ Posts.
+  
 * **Impact**: ده مثال على (Nested / Second-Order UNION-based SQL Injection)، فين الـ Payload بيتحقن جوه قيمة بترجع من استعلام تاني، وده أعقد من الـ UNION العادي لأنه محتاج فهم دقيق لعدد الأعمدة وترتيبها في أكتر من مستوى.
+  
 * **Assessment & Conclusions**: بعد سلسلة من التجارب المتدرجة، ظهرت `Flag 4` جوه قائمة الـ Posts بتاعة اليوزر: `THM{FLAG4:BDF317B14EEF80A3F90729BF2B426BEF}`.
 
 ## Pentester Rationale
@@ -335,7 +345,9 @@ sqlmap -u "http://10.129.160.119/register/user-check?username=x" --dbms=MySQL --
 ## Technical Analysis
 
 * **Findings**: باراميتر `id` بتاع صفحة `/post` جربنا عليه رقم مش موجود (`id=3`) فرجع "Post not found"، وده مؤشر إن الاستعلام بيتنفذ فعلياً على الداتابيز مش مجرد Static Page. بعد كدا جربنا `UNION SELECT` بعمودين فرجع Error بيقول "The used SELECT statements have a different number of columns"، وده أكد إن فيه Injection شغال وكشف لينا معلومة عن عدد الأعمدة. لما رفعنا العدد لـ 4 أعمدة اشتغلت الصفحة عادي وظهرت القيم اللي بعتناها.
+  
 * **Impact**: التطبيق مفيهوش أي Error Handling أو Filtering على رسايل الأخطاء بتاعة الداتابيز، وده بيدي الـ Attacker معلومة قيمة جداً (عدد الأعمدة) من غير ما يحتاج حتى أداة آلية زي سقلماب (Error-based enumeration).
+  
 * **Assessment & Conclusions**: بعد ما ثبتنا عدد الأعمدة (4)، استبدلنا أحد الأعمدة باستعلام فرعي `(select flag from flag)` عشان نطلع قيمة الـ Flag الأخيرة `Flag 5` مباشرة في صفحة الـ Post، وبكدا اكتملت كل الـ 5 Flags المطلوبة في الماشين.
 
 ## Pentester Rationale
