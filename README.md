@@ -1,3 +1,5 @@
+<div dir="rtl" align="right">
+
 <p align="center">
   <img src="SQHell-screens/photo0.jpg" width="600">
 </p>
@@ -376,3 +378,5 @@ sqlmap -u "http://10.129.160.119/register/user-check?username=x" --dbms=MySQL --
 * PortSwigger Web Security Academy — Blind & UNION-based SQL Injection.
 * sqlmap Official Documentation.
 * TryHackMe - SQHell Room Link.
+
+</div>
