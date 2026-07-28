@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="SQHell-screens/photo0.jpg" width="200">
+  <img src="SQHell-screens/photo0.jpg" width="400">
 </p>
 
 # Machine Information
