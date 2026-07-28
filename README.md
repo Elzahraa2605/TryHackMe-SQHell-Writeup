@@ -1,7 +1,7 @@
 <div dir="rtl" style="text-align: right; width: 100%; word-wrap: break-word; overflow-wrap: break-word; line-height: 2; letter-spacing: 0.2px;">
 
 <p align="center">
-  <img src="SQHell-screens/photo0.jpg" width="400">
+  <img src="SQHell-screens/photo0.jpg" width="500">
 </p>
 
 # Machine Information
