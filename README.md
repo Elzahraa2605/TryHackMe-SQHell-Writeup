@@ -385,10 +385,4 @@ sqlmap -u "http://10.129.160.119/register/user-check?username=x" --dbms=MySQL --
 <p align="center">
   <img src="SQHell-screens/photo3.jpg" width="400">
 </p>
-
-* OWASP Testing Guide — SQL Injection.
-* PortSwigger Web Security Academy — Blind & UNION-based SQL Injection.
-* sqlmap Official Documentation.
-* TryHackMe - SQHell Room Link.
-
 </div>
