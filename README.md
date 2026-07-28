@@ -1,5 +1,9 @@
+
+```markdown
+<div dir="rtl" align="right">
+
 <p align="center">
-  <img src="SQHell-screens/photo0.jpg" width="400">
+  <img src="SQHell-screens/photo3.jpg" width="600">
 </p>
 
 # Machine Information
@@ -12,27 +16,23 @@
 ---
 
 # Lab Overview
-المشين دي عبارة عن بيئة اختبار اختراق متخصصة في (SQL Injection) بمختلف أنواعها وأشكالها على تطبيقات الويب. الهدف الرئيسي من اللاب هو الانطلاق من الصفر واستكشاف كل ال(Input Vectors) داخل الموقع للوصول إلى 5 أعلام (Flags) مخفية داخل قواعد البيانات. التحدي بيغطي تقنيات متنوعة تبدأ من الـ UNION Attack المباشر، مروراً بالـ Time-based Blind والـ AJAX Endpoints، وصولاً إلى  (Nested / Secondary SQL Injection) وحقن الترويسات (HTTP Headers).
 
+المشين دي عبارة عن بيئة اختبار اختراق متخصصة في ثغرات حقن الاستعلامات (SQL Injection) بمختلف أنواعها وأشكالها على تطبيقات الويب. الهدف الرئيسي من اللاب هو الانطلاق من الصفر واستكشاف كل نقاط التفاعل والإدخال (Input Vectors) داخل الموقع للوصول إلى 5 أعلام (Flags) مخفية داخل قواعد البيانات. التحدي بيغطي تقنيات متنوعة تبدأ من الـ UNION Attack المباشر، مروراً بالـ Time-based Blind والـ AJAX Endpoints، وصولاً إلى ثغرة الحقن المزدوج (Nested / Secondary SQL Injection) وحقن الترويسات (HTTP Headers).
+
+---
 
 # Initial Enumeration
 
 # Phase 1: Network Scanning & Service Discovery
 
-## Execution Parameters
+## أصل الأمر والمُدخلات (Execution Parameters)
 
-nmap -sV -Pn 10.129.160.119
+```bash
+nmap -p- --min-rate 5000 10.129.160.119 -oN open_ports.txt
 
-<div dir="rtl" align="right">
+```
 
-<p align="center">
-  <img src="SQHell-screens/step1.png" width="600">
-</p>
-
-
-## (Evidence & Outputs)
-
-*(يمكنك إضافة صورة الـ Nmap Scan هنا)*
+## الأدلة والمخرجات (Evidence & Outputs)
 
 ## التحليل التقني (Technical Analysis)
 
@@ -63,9 +63,9 @@ nmap -sV -Pn 10.129.160.119
 
 ---
 
-# فحص تطبيق الويب (Web Enumeration)
+# Web Enumeration
 
-# المرحلة 2: استكشاف رسم خريطة التطبيق (Web Application Mapping & Exploration)
+# Phase 2: Web Application Mapping & Exploration
 
 ## أصل الأمر والمُدخلات (Execution Parameters)
 
@@ -94,9 +94,9 @@ nmap -sV -Pn 10.129.160.119
 
 ---
 
-# الاستغلال - العلم الأول (Exploitation - Flag 1)
+# Exploitation - Flag 1
 
-# المرحلة 3: ثغرة UNION-Based SQL Injection على مسار `/post?id=`
+# Phase 3: In-band / UNION-Based SQL Injection on `/post?id=`
 
 ## أصل الأمر والمُدخلات (Execution Parameters)
 
@@ -136,9 +136,9 @@ nmap -sV -Pn 10.129.160.119
 
 ---
 
-# الاستغلال - العلم الثاني (Exploitation - Flag 2)
+# Exploitation - Flag 2
 
-# المرحلة 4: استخراج البيانات عبر ثغرة Time-Based Blind SQL Injection
+# Phase 4: Time-Based Blind SQL Injection Automated Extraction
 
 ## أصل الأمر والمُدخلات (Execution Parameters)
 
@@ -174,9 +174,9 @@ sqlmap -u "[http://10.129.160.119/](http://10.129.160.119/)..." --dbms=MySQL --d
 
 ---
 
-# الاستغلال - العلم الثالث (Exploitation - Flag 3)
+# Exploitation - Flag 3
 
-# المرحلة 5: تحليل المسارات الخلفية AJAX واستخراج Flag 3
+# Phase 5: Registration AJAX Endpoint Analysis & SQLi Extraction
 
 ## أصل الأمر والمُدخلات (Execution Parameters)
 
@@ -214,9 +214,9 @@ sqlmap -u "[http://10.129.160.119/register/user-check?username=x](http://10.129.
 
 ---
 
-# الاستغلال - العلم الرابع (Exploitation - Flag 4)
+# Exploitation - Flag 4
 
-# المرحلة 6: التحليل المتقدم لمسار `/user?id=` واكتشاف ثغرة Nested SQL Injection
+# Phase 6: Deep Dive into `/user?id=` & Nested SQL Injection Discovery
 
 ## أصل الأمر والمُدخلات (Execution Parameters)
 
@@ -267,9 +267,9 @@ sqlmap -u "[http://10.129.160.119/register/user-check?username=x](http://10.129.
 
 ---
 
-# الاستغلال - العلم الخامس (Exploitation - Flag 5)
+# Exploitation - Flag 5
 
-# المرحلة 7: حقن الترويسات والختام الكامل للتحدي (Header-Based Injection & Final Takeover)
+# Phase 7: Header-Based Injection & Final System Takeover
 
 ## أصل الأمر والمُدخلات (Execution Parameters)
 
