@@ -1,5 +1,5 @@
-readme_content = """<p align="center">
-  <img src="SQHell-screens/photo3.jpg" width="600">
+<p align="center">
+  <img src="SQHell-screens/photo0.jpg" width="200">
 </p>
 
 # Machine Information
